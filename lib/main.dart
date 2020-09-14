@@ -1,7 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(ChangeNotifierProvider(
+    create: (context) => AppModel(),
+    child: MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -31,6 +37,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    var widgets =
+        Provider.of<AppModel>(context).getItems().map((item) => _getCard(item));
     var x = AppStructure();
     return x.create(
       context,
@@ -38,28 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(children: [
           Expanded(
             child: ListView(
-              children: <Widget>[
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-                _getCard(),
-              ],
+              children: widgets.toList(),
             ),
           ),
         ]),
@@ -68,24 +55,25 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _getCard() {
+  Widget _getCard(ItemModel model) {
     return Card(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const ListTile(
-            leading: Icon(Icons.album),
-            title: Text('The Enchanted Nightingale'),
-            subtitle: Text('Music by Julie Gable. Lyrics by Sidney Stein.'),
+          ListTile(
+            leading: Icon(model.icon),
+            title:
+                Text("${model.title} - ${model.price.toStringAsFixed(2)} \$"),
+            subtitle: Text(model.description),
           ),
           ButtonBar(
             children: <Widget>[
               FlatButton(
-                child: const Text('BUY TICKETS'),
+                child: const Text('SHOP'),
                 onPressed: () {/* ... */},
               ),
               FlatButton(
-                child: const Text('LISTEN'),
+                child: const Text('FAVORITE'),
                 onPressed: () {/* ... */},
               ),
             ],
@@ -125,9 +113,15 @@ class AppStructure {
                               child: Column(
                                 children: [
                                   SwitchListTile(
-                                    value: true,
-                                    onChanged: null,
-                                    title: Text('asdsadsadsada'),
+                                    value: Provider.of<AppModel>(context,
+                                            listen: true)
+                                        .showAll,
+                                    onChanged: (_) {
+                                      Provider.of<AppModel>(context,
+                                              listen: false)
+                                          .hideSome();
+                                    },
+                                    title: Text('Show under 100\$'),
                                     secondary: Icon(Icons.ac_unit),
                                   ),
                                   CheckboxListTile(
@@ -256,4 +250,52 @@ class AppStructure {
       );
     }
   }
+}
+
+class AppModel extends ChangeNotifier {
+  final List<ItemModel> _items = List<ItemModel>();
+  final String _loremIpsum = """
+  It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose
+  """;
+
+  AppModel() {
+    var items = _loremIpsum.split(" ");
+    var forloop = [1, 2, 3];
+    var longLoop = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    var random = Random();
+    for (double i = 0; i < 100; i++) {
+      _items.add(ItemModel(
+        forloop.map((_) {
+          return items[random.nextInt(items.length)];
+        }).join(" "),
+        longLoop.map((_) {
+          return items[random.nextInt(items.length)];
+        }).join(" "),
+        Icons.ac_unit,
+        random.nextDouble() * 1500,
+      ));
+    }
+  }
+
+  bool showAll = false;
+
+  List<ItemModel> getItems() {
+    if (!showAll)
+      return _items;
+    else
+      return _items.where((element) => element.price < 100.00).toList();
+  }
+
+  hideSome() {
+    showAll = !showAll;
+    notifyListeners();
+  }
+}
+
+class ItemModel {
+  String title;
+  String description;
+  IconData icon;
+  double price;
+  ItemModel(this.title, this.description, this.icon, this.price);
 }
