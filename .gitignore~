@@ -19,8 +19,3 @@ doc/api/
 *.js_
 *.js.deps
 *.js.map
-android
-web
-ios
-.idea
-.metadata
